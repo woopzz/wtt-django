@@ -1,5 +1,8 @@
-# wtt
-Woopzzz's Time Tracker
+# Woopzzz's Time Tracker
+
+### Summary
+
+This app helps track work sessions using the 45/15 time management technique, where you focus on a task for 45 minutes, followed by a 15-minute break. This method promotes sustained productivity and prevents mental fatigue. The app logs session start and end times, with an option to add a note to completed sessions to describe what was done.
 
 ### Features
 
