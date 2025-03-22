@@ -1,0 +1,29 @@
+services:
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/app
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+    tty: true
+    command: /bin/bash
+
+  db:
+    image: postgres:17.4
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    env_file:
+      - ./.env
+
+volumes:
+  db-data:

@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "App",
+            "type": "debugpy",
+            "request": "launch",
+            "args": [
+                "runserver",
+                "0.0.0.0:8000",
+            ],
+            "django": true,
+            "program": "${workspaceFolder}/manage.py",
+            "console": "internalConsole",
+            "env": {
+                "APP_DEBUG": "True",
+            }
+        }
+    ]
+}
