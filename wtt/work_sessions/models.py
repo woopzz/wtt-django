@@ -11,6 +11,11 @@ class WorkSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
+    duration = models.IntegerField(
+        verbose_name='Duration, mins',
+        blank=True,
+        null=True,
+    )
     note = models.TextField(blank=True, default='')
 
     class Meta:
@@ -28,6 +33,7 @@ class WorkSession(models.Model):
             raise ValidationError(f'The session {self.pk} has been already ended.')
 
         self.ended_at = timezone.now()
+        self.duration = (self.ended_at - self.started_at).total_seconds() // 60
 
         if note:
             self.note = note

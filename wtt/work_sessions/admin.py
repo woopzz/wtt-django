@@ -8,8 +8,8 @@ def complete_sessions(modeladmin, request, queryset):
 
 
 class WorkSessionAdmin(admin.ModelAdmin):
-    fields = ['id', 'started_at', 'ended_at', 'note']
-    readonly_fields = ['id', 'started_at', 'ended_at']
+    fields = ['id', 'started_at', 'ended_at', 'duration', 'note']
+    readonly_fields = ['id', 'started_at', 'ended_at', 'duration']
     actions = [complete_sessions]
 
     def get_readonly_fields(self, request, obj=None):

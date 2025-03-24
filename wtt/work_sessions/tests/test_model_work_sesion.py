@@ -30,10 +30,15 @@ class TestEnd(TestCase):
         self._ws = WorkSession.objects.create()
 
     def test_should_close_session(self):
-        now = timezone.now() + dt.timedelta(minutes=45)
+        duration = 45
+        now = self._ws.started_at + dt.timedelta(minutes=duration)
         with freeze_time(now):
             self._ws.end()
             self.assertEqual(self._ws.ended_at, now, 'Should be now.')
+            self.assertEqual(
+                self._ws.duration, duration,
+                'Should be a number of minutes between the end moment and the start moment.',
+            )
 
     def test_should_close_session_without_note(self):
         self._ws.end()
