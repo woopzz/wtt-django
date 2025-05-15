@@ -40,14 +40,9 @@ class TestEnd(TestCase):
                 'Should be a number of minutes between the end moment and the start moment.',
             )
 
-    def test_should_close_session_without_note(self):
+    def test_should_close_session(self):
         self._ws.end()
-        self.assertEqual(self._ws.note, '', 'Should be empty because we don\'t provide it.')
-
-    def test_should_close_session_with_note(self):
-        note = 'What have I done?! @_@'
-        self._ws.end(note=note)
-        self.assertEqual(self._ws.note, note, 'The provided note must go into the note field.')
+        self.assertTrue(self._ws.ended())
 
     def test_should_forbid_to_end_an_already_ended_session(self):
         self._ws.end()

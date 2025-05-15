@@ -18,12 +18,7 @@ def work_session_list(request):
         return JsonResponse(serializer.data, safe=False)
 
     if request.method == 'POST':
-        if request.body:
-            data = JSONParser().parse(request)
-        else:
-            data = {}
-
-        serializer = WorkSessionSerializer(data=data)
+        serializer = WorkSessionSerializer(data={})
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=201)
@@ -67,13 +62,18 @@ def work_session_end(request, pk):
     except WorkSession.DoesNotExist:
         return HttpResponse(status=404)
 
-    data = JSONParser().parse(request) if request.body else {}
-    serializer = WorkSessionSerializer(ws, data=data, partial=True)
-    serializer.is_valid(raise_exception=True)
-
     try:
-        ws.end(note=serializer.validated_data.get('note'))
+        ws.end()
     except ValidationError as exc:
         return JsonResponse({'detail': str(exc)}, status=400)
+
+    data = JSONParser().parse(request) if request.body else {}
+    serializer = WorkSessionSerializer(ws, data=data)
+    serializer.is_valid(raise_exception=True)
+
+    new_note = serializer.validated_data.get('note')
+    if new_note:
+        ws.note = new_note
+        ws.save()
 
     return JsonResponse(serializer.data)

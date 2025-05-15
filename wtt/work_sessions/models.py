@@ -28,14 +28,13 @@ class WorkSession(models.Model):
             name += ' - ' + self.ended_at.strftime(DT_FORMAT)
         return name
 
-    def end(self, note=None):
+    def ended(self):
+        return bool(self.ended_at)
+
+    def end(self):
         if self.ended_at:
             raise ValidationError(f'The session {self.pk} has been already ended.')
 
         self.ended_at = timezone.now()
         self.duration = (self.ended_at - self.started_at).total_seconds() // 60
-
-        if note:
-            self.note = note
-
         self.save()

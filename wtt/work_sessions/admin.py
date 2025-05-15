@@ -15,8 +15,7 @@ class WorkSessionAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         result = super().get_readonly_fields(request, obj=obj)
 
-        completed = obj and obj.ended_at
-        if not completed:
+        if not (obj and obj.ended()):
             result = result + ['note']
 
         return result
