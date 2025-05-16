@@ -42,7 +42,7 @@ class TestAPI(APITestCase):
         self.assertEqual(response.status_code, HTTP_200_OK)
 
         resp_data = json.loads(response.content)
-        self.assertEqual(WorkSessionSerializer([ws2, ws1], many=True).data, resp_data)
+        self.assertEqual(WorkSessionSerializer([ws2, ws1], many=True).data, resp_data['results'])
 
     def test_get(self):
         ws = WorkSession.objects.create()
