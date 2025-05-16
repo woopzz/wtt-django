@@ -8,7 +8,7 @@ def complete_sessions(modeladmin, request, queryset):
 
 
 class WorkSessionAdmin(admin.ModelAdmin):
-    fields = ['id', 'started_at', 'ended_at', 'duration', 'note']
+    fields = ['id', 'owner', 'started_at', 'ended_at', 'duration', 'note']
     readonly_fields = ['id', 'started_at', 'ended_at', 'duration']
     actions = [complete_sessions]
 
@@ -17,6 +17,10 @@ class WorkSessionAdmin(admin.ModelAdmin):
 
         if not (obj and obj.ended()):
             result = result + ['note']
+
+        # Allow to specify a user on create, but forbid to change it.
+        if obj:
+            result = result + ['owner']
 
         return result
 

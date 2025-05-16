@@ -18,15 +18,18 @@ class WorkSessionViewSet(
     mixins.DestroyModelMixin,
     GenericViewSet,
 ):
-    queryset = WorkSession.objects.all()
     serializer_class = WorkSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [authentication.TokenAuthentication]
 
+    def get_queryset(self):
+        user = self.request.user
+        return WorkSession.objects.filter(owner=user)
+
     def create(self, request):
         serializer = WorkSessionSerializer(data={})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(owner=request.user)
             return Response(serializer.data, status=HTTP_201_CREATED)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)

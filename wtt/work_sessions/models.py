@@ -1,13 +1,19 @@
 import uuid
 
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
 DT_FORMAT = '%d.%m.%Y %H:%M:%S'
 
 
 class WorkSession(models.Model):
+
+    def owner_default():
+        return get_user_model().objects.get(username='stub').id
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
@@ -17,6 +23,12 @@ class WorkSession(models.Model):
         null=True,
     )
     note = models.TextField(blank=True, default='')
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='work_sessions',
+        on_delete=models.CASCADE,
+        default=owner_default,
+    )
 
     class Meta:
         db_table = 'wtt_work_session'

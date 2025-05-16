@@ -21,6 +21,7 @@ class TestStart(TestCase):
             self.assertEqual(ws.started_at, now, 'Should be set automatically.')
             self.assertIsNone(ws.ended_at, 'Should be empty initially.')
             self.assertEqual(ws.note, '', 'Should be empty initially.')
+            self.assertEqual(ws.owner.username, 'stub', 'Default user.')
 
 
 class TestEnd(TestCase):
