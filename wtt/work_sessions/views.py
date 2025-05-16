@@ -1,10 +1,14 @@
 from django.db import transaction
-from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ValidationError
 
 from rest_framework import permissions, authentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from rest_framework.status import (
+    HTTP_201_CREATED, HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND,
+)
 
 from .models import WorkSession
 from .serializers import WorkSessionSerializer
@@ -16,15 +20,15 @@ def work_session_list(request):
     if request.method == 'GET':
         ws = WorkSession.objects.all()
         serializer = WorkSessionSerializer(ws, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response(serializer.data)
 
     if request.method == 'POST':
         serializer = WorkSessionSerializer(data={})
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data, status=201)
+            return Response(serializer.data, status=HTTP_201_CREATED)
 
-        return JsonResponse(serializer.errors, status=400)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PATCH', 'DELETE'])
 @permission_classes([permissions.IsAuthenticated])
@@ -33,11 +37,11 @@ def work_session(request, pk):
     try:
         ws = WorkSession.objects.get(pk=pk)
     except WorkSession.DoesNotExist:
-        return HttpResponse(status=404)
+        return Response(status=HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         serializer = WorkSessionSerializer(ws)
-        return JsonResponse(serializer.data)
+        return Response(serializer.data)
 
     if request.method == 'PATCH':
         data = JSONParser().parse(request)
@@ -46,13 +50,13 @@ def work_session(request, pk):
         serializer = WorkSessionSerializer(ws, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data)
+            return Response(serializer.data)
 
-        return JsonResponse(serializer.errors, status=400)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
         ws.delete()
-        return HttpResponse(status=204)
+        return Response(status=HTTP_204_NO_CONTENT)
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
@@ -61,15 +65,15 @@ def work_session_end(request, pk):
     try:
         ws = WorkSession.objects.get(pk=pk)
     except WorkSession.DoesNotExist:
-        return HttpResponse(status=404)
+        return Response(status=HTTP_404_NOT_FOUND)
 
     with transaction.atomic():
         try:
             ws.end()
         except ValidationError as exc:
-            return JsonResponse({'detail': str(exc)}, status=400)
+            return Response({'detail': str(exc)}, status=HTTP_400_BAD_REQUEST)
 
-        data = JSONParser().parse(request) if request.body else {}
+        data = request.data if request.body else {}
         serializer = WorkSessionSerializer(ws, data=data)
         serializer.is_valid(raise_exception=True)
 
@@ -78,4 +82,4 @@ def work_session_end(request, pk):
             ws.note = new_note
             ws.save()
 
-        return JsonResponse(serializer.data)
+        return Response(serializer.data)

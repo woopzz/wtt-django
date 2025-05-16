@@ -5,6 +5,10 @@ from django.contrib.auth.models import User
 
 from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
+from rest_framework.status import (
+    HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND,
+)
 
 from ..models import WorkSession
 from ..serializers import WorkSessionSerializer
@@ -22,7 +26,7 @@ class TestAPI(APITestCase):
     def test_create(self):
         url = reverse('work-session-list')
         response = self.client.post(url)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, HTTP_201_CREATED)
 
         resp_data = json.loads(response.content)
         ws = WorkSession.objects.get(pk=resp_data['id'])
@@ -35,7 +39,7 @@ class TestAPI(APITestCase):
 
         url = reverse('work-session-list')
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTP_200_OK)
 
         resp_data = json.loads(response.content)
         self.assertEqual(WorkSessionSerializer([ws2, ws1], many=True).data, resp_data)
@@ -45,7 +49,7 @@ class TestAPI(APITestCase):
 
         url = reverse('work-session', args=[ws.id])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTP_200_OK)
 
         resp_data = json.loads(response.content)
         self.assertEqual(WorkSessionSerializer(ws).data, resp_data)
@@ -58,7 +62,7 @@ class TestAPI(APITestCase):
 
         url = reverse('work-session', args=[ws.id])
         response = self.client.patch(url, data={'note': new_note})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTP_200_OK)
 
         resp_data = json.loads(response.content)
         self.assertEqual(resp_data['note'], new_note)
@@ -68,7 +72,7 @@ class TestAPI(APITestCase):
 
         url = reverse('work-session', args=[ws.id])
         response = self.client.patch(url, data={'note': 'some text'})
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
 
         resp_data = json.loads(response.content)
         self.assertIn(
@@ -81,14 +85,14 @@ class TestAPI(APITestCase):
 
         url = reverse('work-session', args=[ws.id])
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
 
     def test_end(self):
         ws = WorkSession.objects.create()
 
         url = reverse('work-session-end', args=[ws.id])
         response = self.client.post(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTP_200_OK)
 
         ws.refresh_from_db()
         self.assertTrue(ws.ended())
@@ -99,7 +103,7 @@ class TestAPI(APITestCase):
 
         url = reverse('work-session-end', args=[ws.id])
         response = self.client.post(url, data={'note': new_note})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTP_200_OK)
 
         ws.refresh_from_db()
         self.assertTrue(ws.ended())
