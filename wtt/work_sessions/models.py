@@ -22,7 +22,11 @@ class WorkSession(models.Model):
         blank=True,
         null=True,
     )
-    note = models.TextField(blank=True, default='')
+    note = models.TextField(
+        blank=True,
+        default='',
+        max_length=1000,
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='work_sessions',
