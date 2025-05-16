@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ValidationError
 
@@ -62,18 +63,19 @@ def work_session_end(request, pk):
     except WorkSession.DoesNotExist:
         return HttpResponse(status=404)
 
-    try:
-        ws.end()
-    except ValidationError as exc:
-        return JsonResponse({'detail': str(exc)}, status=400)
+    with transaction.atomic():
+        try:
+            ws.end()
+        except ValidationError as exc:
+            return JsonResponse({'detail': str(exc)}, status=400)
 
-    data = JSONParser().parse(request) if request.body else {}
-    serializer = WorkSessionSerializer(ws, data=data)
-    serializer.is_valid(raise_exception=True)
+        data = JSONParser().parse(request) if request.body else {}
+        serializer = WorkSessionSerializer(ws, data=data)
+        serializer.is_valid(raise_exception=True)
 
-    new_note = serializer.validated_data.get('note')
-    if new_note:
-        ws.note = new_note
-        ws.save()
+        new_note = serializer.validated_data.get('note')
+        if new_note:
+            ws.note = new_note
+            ws.save()
 
-    return JsonResponse(serializer.data)
+        return JsonResponse(serializer.data)
