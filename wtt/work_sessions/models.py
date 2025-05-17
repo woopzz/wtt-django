@@ -34,6 +34,11 @@ class WorkSession(models.Model):
         on_delete=models.CASCADE,
         default=owner_default,
     )
+    labels = models.ManyToManyField(
+        'work_sessions.WorkSessionLabel',
+        related_name='work_sessions',
+        blank=True,
+    )
 
     class Meta:
         db_table = 'wtt_work_session'
@@ -58,3 +63,23 @@ class WorkSession(models.Model):
         self.ended_at = timezone.now()
         self.duration = (self.ended_at - self.started_at).total_seconds() // 60
         self.save()
+
+
+class WorkSessionLabel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    name = models.CharField(max_length=100)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='work_session_labels',
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        db_table = 'wtt_work_session_label'
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'owner'], name='unique_name_owner'),
+        ]
+
+    def __str__(self):
+        return f'{self.name} (by {self.owner})'

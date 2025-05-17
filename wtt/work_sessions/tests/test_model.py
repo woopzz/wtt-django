@@ -1,13 +1,15 @@
 import uuid
 import datetime as dt
 
+from django.db import IntegrityError
 from django.utils import timezone
 from django.test import TestCase
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
 from freezegun import freeze_time
 
-from ..models import WorkSession
+from ..models import WorkSession, WorkSessionLabel
 
 
 class TestStart(TestCase):
@@ -50,3 +52,31 @@ class TestEnd(TestCase):
 
         with self.assertRaisesMessage(ValidationError, 'already ended'):
             self._ws.end()
+
+
+class TestWorkSessionLabel(TestCase):
+
+    def setUp(self):
+        self._user = get_user_model().objects.create_user('test')
+
+    def test_create(self):
+        name = 'first'
+        wsl = WorkSessionLabel.objects.create(name=name, owner=self._user)
+        self.assertIsInstance(wsl.id, uuid.UUID)
+        self.assertEqual(wsl.name, name)
+        self.assertEqual(wsl.owner, self._user)
+        self.assertEqual(wsl.work_sessions.count(), 0)
+
+    def test_ensure_name_is_unique_per_user(self):
+        name = 'second'
+
+        # My first label with this name.
+        WorkSessionLabel.objects.create(name=name, owner=self._user)
+
+        # Another label with this name, but it's not mine, so it's fine.
+        another_user = get_user_model().objects.create_user('test2')
+        WorkSessionLabel.objects.create(name=name, owner=another_user)
+
+        # Must raise an error because I already has a label with this name.
+        with self.assertRaisesRegex(IntegrityError, 'unique_name_owner'):
+            WorkSessionLabel.objects.create(name=name, owner=self._user)
