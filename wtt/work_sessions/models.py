@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.indexes import GinIndex
 
 DT_FORMAT = '%d.%m.%Y %H:%M:%S'
 
@@ -37,6 +38,9 @@ class WorkSession(models.Model):
     class Meta:
         db_table = 'wtt_work_session'
         ordering = ['-started_at', '-ended_at']
+        indexes = [
+            GinIndex(name='note_trgm_gin', fields=['note'], opclasses=['gin_trgm_ops']),
+        ]
 
     def __str__(self):
         name = self.started_at.strftime(DT_FORMAT)

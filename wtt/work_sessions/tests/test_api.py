@@ -65,6 +65,20 @@ class TestAPI(APITestCase):
         self.assertEqual(resp_data['count'], 1)
         self.assertEqual(WorkSessionSerializer([my_ws], many=True).data, resp_data['results'])
 
+    def test_search(self):
+        ws = self._create_work_session()
+        ws.end()
+
+        ws.note = 'Gumby rides on the path of Middlesbrough'
+        ws.save()
+
+        url = reverse('work-session-list')
+        response = self.client.get(url, {'search': 'Middlesbruh'})
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(WorkSessionSerializer([ws], many=True).data, resp_data['results'])
+
     def test_get(self):
         ws = self._create_work_session()
 

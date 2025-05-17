@@ -24,7 +24,13 @@ class WorkSessionViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        return WorkSession.objects.filter(owner=user)
+        queryset = WorkSession.objects.filter(owner=user)
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(note__trigram_word_similar=search)
+
+        return queryset
 
     def create(self, request):
         serializer = WorkSessionSerializer(data={})
