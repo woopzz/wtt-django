@@ -12,6 +12,7 @@
             "django": true,
             "program": "${workspaceFolder}/manage.py",
             "console": "internalConsole",
+            "justMyCode": false,
             "env": {
                 "APP_DEBUG": "True",
             }
