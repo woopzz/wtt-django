@@ -7,11 +7,11 @@ from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 from rest_framework.status import (
     HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT,
-    HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND,
+    HTTP_400_BAD_REQUEST,
 )
 
-from ..models import WorkSession
-from ..serializers import WorkSessionSerializer
+from ..models import WorkSession, WorkSessionLabel
+from ..serializers import WorkSessionSerializer, WorkSessionLabelSerializer
 
 
 class TestAPI(APITestCase):
@@ -19,16 +19,31 @@ class TestAPI(APITestCase):
     def setUp(self):
         super().setUp()
 
-        self._user = get_user_model().objects.create_user('test')
+        self._user = self._create_user(username='main test user')
 
         token = Token.objects.create(user=self._user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+    def _create_user(self, username='test'):
+        return get_user_model().objects.create_user(username)
 
     def _create_work_session(self, **kwargs):
         if 'owner' not in kwargs:
             kwargs['owner'] = self._user
 
         return WorkSession.objects.create(**kwargs)
+
+    def _create_work_session_label(self, **kwargs):
+        if 'name' not in kwargs:
+            kwargs['name'] = 'test'
+
+        if 'owner' not in kwargs:
+            kwargs['owner'] = self._user
+
+        return WorkSessionLabel.objects.create(**kwargs)
+
+
+class TestWorkSession(TestAPI):
 
     def test_create(self):
         url = reverse('work-session-list')
@@ -38,6 +53,20 @@ class TestAPI(APITestCase):
         resp_data = json.loads(response.content)
         ws = WorkSession.objects.get(pk=resp_data['id'])
         self.assertEqual(WorkSessionSerializer(ws).data, resp_data)
+
+    # Test this constraint on the API level because we don't have the request object in the context
+    # when we test serializers (and I don't want to create a fake one, at least now).
+    def test_forbid_to_create_with_other_user_label(self):
+        another_user = self._create_user(username='another test user')
+        another_user_wsl = self._create_work_session_label(owner=another_user)
+
+        url = reverse('work-session-list')
+        response = self.client.post(url, data={'labels': [another_user_wsl.id]})
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            json.loads(response.content),
+            {'labels': [f'Invalid pk "{another_user_wsl.id}" - object does not exist.']},
+        )
 
     def test_get_list(self):
         ws1 = self._create_work_session()
@@ -143,3 +172,78 @@ class TestAPI(APITestCase):
         ws.refresh_from_db()
         self.assertTrue(ws.ended())
         self.assertEqual(ws.note, new_note)
+
+
+class TestWorkSessionLabel(TestAPI):
+
+    def test_create(self):
+        url = reverse('work-session-label-list')
+        response = self.client.post(url, data={'name': 'test create'})
+        self.assertEqual(response.status_code, HTTP_201_CREATED)
+
+        resp_data = json.loads(response.content)
+        wsl = WorkSessionLabel.objects.get(pk=resp_data['id'])
+        self.assertEqual(WorkSessionLabelSerializer(wsl).data, resp_data)
+
+    def test_get_list(self):
+        wsl1 = self._create_work_session_label(name='first')
+        wsl2 = self._create_work_session_label(name='second')
+
+        url = reverse('work-session-label-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(WorkSessionLabelSerializer([wsl1, wsl2], many=True).data, resp_data['results'])
+
+    def test_get_only_owned_records(self):
+        my_wsl = self._create_work_session_label()
+
+        stub_user = get_user_model().objects.get(username='stub')
+        self._create_work_session_label(owner=stub_user)
+
+        url = reverse('work-session-label-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(resp_data['count'], 1)
+        self.assertEqual(WorkSessionLabelSerializer([my_wsl], many=True).data, resp_data['results'])
+
+    def test_search(self):
+        wsl = self._create_work_session_label(name='job')
+
+        url = reverse('work-session-label-list')
+        response = self.client.get(url, {'search': 'jo'})
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(WorkSessionLabelSerializer([wsl], many=True).data, resp_data['results'])
+
+    def test_get(self):
+        wsl = self._create_work_session_label()
+
+        url = reverse('work-session-label', args=[wsl.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(WorkSessionLabelSerializer(wsl).data, resp_data)
+
+    def test_update_name(self):
+        wsl = self._create_work_session_label(name='v1')
+        new_name = 'v2'
+
+        url = reverse('work-session-label', args=[wsl.id])
+        response = self.client.patch(url, data={'name': new_name})
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(resp_data['name'], new_name)
+
+    def test_delete(self):
+        wsl = self._create_work_session_label()
+
+        url = reverse('work-session-label', args=[wsl.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)

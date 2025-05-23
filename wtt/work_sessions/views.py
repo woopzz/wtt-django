@@ -1,23 +1,17 @@
 from django.db import transaction
 from django.core.exceptions import ValidationError
 
-from rest_framework import permissions, authentication, mixins
-from rest_framework.viewsets import GenericViewSet
+from rest_framework import permissions, authentication
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import JSONParser
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_400_BAD_REQUEST
 
-from .models import WorkSession
-from .serializers import WorkSessionSerializer
+from .models import WorkSession, WorkSessionLabel
+from .serializers import WorkSessionSerializer, WorkSessionLabelSerializer
 
 
-class WorkSessionViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.DestroyModelMixin,
-    GenericViewSet,
-):
+class WorkSessionViewSet(ModelViewSet):
     serializer_class = WorkSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [authentication.TokenAuthentication]
@@ -32,26 +26,8 @@ class WorkSessionViewSet(
 
         return queryset
 
-    def create(self, request):
-        serializer = WorkSessionSerializer(data={})
-        if serializer.is_valid():
-            serializer.save(owner=request.user)
-            return Response(serializer.data, status=HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
-
-    def partial_update(self, request, pk):
-        ws = self.get_object()
-
-        data = JSONParser().parse(request)
-        data = {'note': data.get('note')} if isinstance(data, dict) else {}
-
-        serializer = WorkSessionSerializer(ws, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
     @action(detail=True)
     def end(self, request, pk):
@@ -73,3 +49,22 @@ class WorkSessionViewSet(
                 ws.save()
 
             return Response(serializer.data)
+
+
+class WorkSessionLabelViewSet(ModelViewSet):
+    serializer_class = WorkSessionLabelSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = WorkSessionLabel.objects.filter(owner=user)
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__trigram_word_similar=search)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)

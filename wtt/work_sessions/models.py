@@ -80,6 +80,9 @@ class WorkSessionLabel(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['name', 'owner'], name='unique_name_owner'),
         ]
+        indexes = [
+            GinIndex(name='wsl_name_trgm_gin', fields=['name'], opclasses=['gin_trgm_ops']),
+        ]
 
     def __str__(self):
         return f'{self.name} (by {self.owner})'
