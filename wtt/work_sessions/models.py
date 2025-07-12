@@ -15,7 +15,7 @@ class WorkSession(models.Model):
     def owner_default():
         return get_user_model().objects.get(username='stub').id
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
     duration = models.IntegerField(

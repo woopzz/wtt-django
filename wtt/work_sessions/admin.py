@@ -3,6 +3,7 @@ from django.utils.html import format_html_join
 from django.contrib import admin
 
 from .models import WorkSession, WorkSessionLabel
+from .forms import WorkSessionAdminForm
 
 def complete_sessions(modeladmin, request, queryset):
     for ws in queryset:
@@ -10,6 +11,7 @@ def complete_sessions(modeladmin, request, queryset):
 
 
 class WorkSessionAdmin(admin.ModelAdmin):
+    form = WorkSessionAdminForm
     fields = ['id', 'owner', 'labels', 'started_at', 'ended_at', 'duration', 'note']
     readonly_fields = ['id', 'started_at', 'ended_at', 'duration']
     autocomplete_fields = ['labels']
