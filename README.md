@@ -1,11 +1,14 @@
 # Woopzzz's Time Tracker
 
+##### Abandoned. There is no reason for a web app if a CLI app can be used instead. See the **wtt** repository.
+
 ### Summary
 
-This app helps track work sessions using the 45/15 time management technique, where you focus on a task for 45 minutes, followed by a 15-minute break. This method promotes sustained productivity and prevents mental fatigue. The app logs session start and end times, with an option to add a note to completed sessions to describe what was done.
+This app helps track focused work sessions by logging their start and end times. It’s designed to support any personal workflow or time management style. Each completed session can include an optional note describing what was accomplished, making it easy to review and analyze your work over time.
 
 ### Features
 
 - You can start a new session and end it when you finish a part of your work.
 - You can add a note to a completed session with the description of what you've done.
-- (WIP) You can view info about all of your session as a list of records. Each record includes start time, end time, duration, description.
+- You can add create labels and assign them to sessions.
+- You can get all your sessions and labels.
