@@ -12,9 +12,10 @@ from rest_framework.status import (
 
 from ..models import WorkSession, WorkSessionLabel
 from ..serializers import WorkSessionSerializer, WorkSessionLabelSerializer
+from .factories import TestFactories
 
 
-class TestAPI(APITestCase):
+class TestAPI(APITestCase, TestFactories):
 
     def setUp(self):
         super().setUp()
@@ -24,23 +25,17 @@ class TestAPI(APITestCase):
         token = Token.objects.create(user=self._user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
 
-    def _create_user(self, username='test'):
-        return get_user_model().objects.create_user(username)
-
     def _create_work_session(self, **kwargs):
         if 'owner' not in kwargs:
             kwargs['owner'] = self._user
 
-        return WorkSession.objects.create(**kwargs)
+        return super()._create_work_session(**kwargs)
 
     def _create_work_session_label(self, **kwargs):
-        if 'name' not in kwargs:
-            kwargs['name'] = 'test'
-
         if 'owner' not in kwargs:
             kwargs['owner'] = self._user
 
-        return WorkSessionLabel.objects.create(**kwargs)
+        return super()._create_work_session_label(**kwargs)
 
 
 class TestWorkSession(TestAPI):

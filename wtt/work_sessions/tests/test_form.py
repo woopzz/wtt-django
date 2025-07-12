@@ -1,23 +1,10 @@
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 
-from ..models import WorkSession, WorkSessionLabel
 from ..forms import WorkSessionAdminForm
+from .factories import TestFactories
 
 
-class TestWorkSessionAdminForm(TestCase):
-
-    def _create_user(self, username='test'):
-        return get_user_model().objects.create_user(username)
-
-    def _create_work_session(self, **kwargs):
-        return WorkSession.objects.create(**kwargs)
-
-    def _create_work_session_label(self, **kwargs):
-        if 'name' not in kwargs:
-            kwargs['name'] = 'test'
-
-        return WorkSessionLabel.objects.create(**kwargs)
+class TestWorkSessionAdminForm(TestCase, TestFactories):
 
     def setUp(self):
         super().setUp()
@@ -40,7 +27,7 @@ class TestWorkSessionAdminForm(TestCase):
         another_user = self._create_user(username='another test user')
         another_user_wsl = self._create_work_session_label(owner=another_user)
 
-        ws = WorkSession.objects.create(owner=self._user)
+        ws = self._create_work_session(owner=self._user)
 
         form = WorkSessionAdminForm(instance=ws, data={'labels': [another_user_wsl.pk]})
         self.assertFalse(form.is_valid())

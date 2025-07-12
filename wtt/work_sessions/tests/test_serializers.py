@@ -1,30 +1,15 @@
 import datetime as dt
 
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.test import APIRequestFactory
 
 from ..models import WorkSession, WorkSessionLabel
 from ..serializers import WorkSessionSerializer, WorkSessionLabelSerializer, WorkSessionLabelDetailsSerializer
+from .factories import TestFactories
 
 
-class TestSerializer(TestCase):
-
-    def _create_user(self, username='test'):
-        return get_user_model().objects.create_user(username)
-
-    def _create_work_session(self, **kwargs):
-        return WorkSession.objects.create(**kwargs)
-
-    def _create_work_session_label(self, **kwargs):
-        if 'name' not in kwargs:
-            kwargs['name'] = 'test'
-
-        return WorkSessionLabel.objects.create(**kwargs)
-
-
-class TestWorkSessionSerializer(TestSerializer):
+class TestWorkSessionSerializer(TestCase, TestFactories):
 
     def setUp(self):
         super().setUp()
@@ -41,7 +26,7 @@ class TestWorkSessionSerializer(TestSerializer):
         self.assertIn(self._wsl, ws.labels.all())
 
     def test_read(self):
-        ws = WorkSession.objects.create()
+        ws = self._create_work_session()
         ws.labels.add(self._wsl)
         serialized_labels = WorkSessionLabelDetailsSerializer([self._wsl], many=True).data
 
@@ -69,7 +54,7 @@ class TestWorkSessionSerializer(TestSerializer):
         self.assertEqual(serializer.errors['labels'][0].code, 'does_not_exist')
 
 
-class TestWorkSessionLabelSerializer(TestSerializer):
+class TestWorkSessionLabelSerializer(TestCase, TestFactories):
 
     def setUp(self):
         super().setUp()
@@ -104,7 +89,7 @@ class TestWorkSessionLabelSerializer(TestSerializer):
         self.assertEqual(data['work_sessions'], serialized_work_sessions)
 
 
-class TestWorkSessionLabelDetailsSerializer(TestSerializer):
+class TestWorkSessionLabelDetailsSerializer(TestCase, TestFactories):
 
     def test_read(self):
         name = 'test wsl details'

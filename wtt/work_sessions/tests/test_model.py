@@ -5,11 +5,11 @@ from django.db import IntegrityError
 from django.utils import timezone
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from django.contrib.auth import get_user_model
 
 from freezegun import freeze_time
 
 from ..models import WorkSession, WorkSessionLabel
+from .factories import TestFactories
 
 
 class TestWorkSession(TestCase):
@@ -45,10 +45,10 @@ class TestWorkSession(TestCase):
             self._ws.end()
 
 
-class TestWorkSessionLabel(TestCase):
+class TestWorkSessionLabel(TestCase, TestFactories):
 
     def setUp(self):
-        self._user = get_user_model().objects.create_user('test')
+        self._user= self._create_user()
 
     def test_create(self):
         name = 'first'
@@ -65,7 +65,7 @@ class TestWorkSessionLabel(TestCase):
         WorkSessionLabel.objects.create(name=name, owner=self._user)
 
         # Another label with this name, but it's not mine, so it's fine.
-        another_user = get_user_model().objects.create_user('test2')
+        another_user = self._create_user(username='test2')
         WorkSessionLabel.objects.create(name=name, owner=another_user)
 
         # Must raise an error because I already has a label with this name.
