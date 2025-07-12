@@ -31,8 +31,6 @@ class WorkSessionSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # We don't have "request" in tests.
-        # TODO Bootstrap a request object and put it into the context.
         if 'request' in self.context:
             user = self.context['request'].user
 

@@ -54,20 +54,6 @@ class TestWorkSession(TestAPI):
         ws = WorkSession.objects.get(pk=resp_data['id'])
         self.assertEqual(WorkSessionSerializer(ws).data, resp_data)
 
-    # Test this constraint on the API level because we don't have the request object in the context
-    # when we test serializers (and I don't want to create a fake one, at least now).
-    def test_forbid_to_create_with_other_user_label(self):
-        another_user = self._create_user(username='another test user')
-        another_user_wsl = self._create_work_session_label(owner=another_user)
-
-        url = reverse('work-session-list')
-        response = self.client.post(url, data={'labels': [another_user_wsl.id]})
-        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            json.loads(response.content),
-            {'labels': [f'Invalid pk "{another_user_wsl.id}" - object does not exist.']},
-        )
-
     def test_get_list(self):
         ws1 = self._create_work_session()
         ws2 = self._create_work_session()
