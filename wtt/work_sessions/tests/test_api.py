@@ -1,4 +1,5 @@
 import json
+import datetime as dt
 
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -9,6 +10,8 @@ from rest_framework.status import (
     HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
 )
+
+from freezegun import freeze_time
 
 from ..models import WorkSession, WorkSessionLabel
 from ..serializers import WorkSessionSerializer, WorkSessionLabelSerializer
@@ -84,6 +87,29 @@ class TestWorkSession(TestAPI):
 
         url = reverse('work-session-list')
         response = self.client.get(url, {'search': 'Middlesbruh'})
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        resp_data = json.loads(response.content)
+        self.assertEqual(WorkSessionSerializer([ws], many=True).data, resp_data['results'])
+
+    def test_get_list_filtered_by_date(self):
+        from_dt = dt.datetime.now()
+        to_dt = from_dt + dt.timedelta(hours=1)
+
+        with freeze_time(from_dt - dt.timedelta(days=1)):
+            ws_before = self._create_work_session()
+            ws_before.end()
+
+        with freeze_time(from_dt + dt.timedelta(minutes=30)):
+            ws = self._create_work_session()
+            ws.end()
+
+        with freeze_time(to_dt + dt.timedelta(days=1)):
+            ws_after = self._create_work_session()
+            ws_after.end()
+
+        url = reverse('work-session-list')
+        response = self.client.get(url, {'started_at': from_dt, 'ended_at': to_dt})
         self.assertEqual(response.status_code, HTTP_200_OK)
 
         resp_data = json.loads(response.content)

@@ -1,3 +1,5 @@
+import datetime as dt
+
 from django.db import transaction
 from django.core.exceptions import ValidationError
 
@@ -6,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from .models import WorkSession, WorkSessionLabel
 from .serializers import WorkSessionSerializer, WorkSessionLabelSerializer
@@ -18,11 +21,20 @@ class WorkSessionViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        params = self.request.query_params
         queryset = WorkSession.objects.filter(owner=user)
 
-        search = self.request.query_params.get('search')
+        search = params.get('search')
         if search:
             queryset = queryset.filter(note__trigram_word_similar=search)
+
+        started_at = params.get('started_at')
+        if started_at:
+            queryset = queryset.filter(started_at__gte=try_to_parse_datetime_string(started_at))
+
+        ended_at = params.get('ended_at')
+        if ended_at:
+            queryset = queryset.filter(ended_at__lte=try_to_parse_datetime_string(ended_at))
 
         return queryset
 
@@ -68,3 +80,9 @@ class WorkSessionLabelViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+def try_to_parse_datetime_string(value):
+    try:
+        return dt.datetime.fromisoformat(value).replace(tzinfo=dt.timezone.utc)
+    except Exception:
+        raise DRFValidationError(f'"{value}" is not a valid ISO 8601 formated datetime string.')
