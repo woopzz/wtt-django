@@ -12,6 +12,7 @@ def complete_sessions(modeladmin, request, queryset):
 class WorkSessionAdmin(admin.ModelAdmin):
     fields = ['id', 'owner', 'labels', 'started_at', 'ended_at', 'duration', 'note']
     readonly_fields = ['id', 'started_at', 'ended_at', 'duration']
+    autocomplete_fields = ['labels']
     actions = [complete_sessions]
 
     def get_readonly_fields(self, request, obj=None):
@@ -34,6 +35,7 @@ class WorkSessionLabelAdmin(admin.ModelAdmin):
 
     fields = ['id', 'name', 'owner', 'related_work_sessions']
     readonly_fields = ['id', 'related_work_sessions']
+    search_fields = ['name']
 
     def related_work_sessions(self, obj):
         if not obj.pk:
